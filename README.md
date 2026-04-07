@@ -60,6 +60,20 @@ flowchart TB
 
 ---
 
+## Por qué Rust — Arquitectura Híbrida Python/Rust
+
+El núcleo de Vigilia Edge (`vigilia-core`) es una extensión nativa Rust compilada vía PyO3.
+Python orquesta y configura; Rust procesa frames donde la latencia y la seguridad de memoria importan.
+
+| Motivación | Detalle |
+|------------|---------|
+| **Zero-copy operations** | Los buffers de ~6 MB/frame se asignan en Shared Memory una sola vez. Rust pasa punteros — nunca copia datos entre el decoder, el scheduler y los workers de inferencia |
+| **Bypass del GIL** | El núcleo Rust corre en threads nativos de OS, sin el Global Interpreter Lock. Paralelismo real entre decodificación de frames y pipeline de inferencia GPU |
+| **Rendimiento determinista** | Sin GC pauses. La latencia de cámara a UI es ~80ms a 25fps de forma consistente bajo carga sostenida |
+| **Seguridad de memoria** | El compilador garantiza en tiempo de compilación: sin data races, sin dangling pointers en el pipeline de video — crítico en software de seguridad |
+
+---
+
 ## Por qué Desktop-First
 
 - **Privacidad absoluta**: ningún frame sale del equipo; inferencia 100% local.
