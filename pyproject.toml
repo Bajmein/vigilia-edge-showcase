@@ -1,0 +1,47 @@
+# =============================================================================
+# vigilia-edge — Showcase build template
+#
+# Este archivo es de EXHIBICIÓN. Muestra la estructura de dependencias y
+# configuración de build del sistema Vigilia Edge Desktop v1.0.
+# El código fuente no está incluido en este repositorio.
+# =============================================================================
+
+[build-system]
+requires = ["maturin>=1.8,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "vigilia-edge"
+version = "1.0.0"
+description = "Desktop surveillance system with zero-copy video pipeline and Rust core"
+requires-python = ">=3.11"
+dependencies = [
+    "opencv-python>=4.9",
+    "onnxruntime-gpu>=1.18",
+    "pyside6>=6.7",
+    "hydra-core>=1.3",
+    "pydantic>=2.7",
+    "msgpack>=1.0",
+    "pygame>=2.5",
+    "loguru>=0.7",
+]
+
+[project.scripts]
+vigilia-desktop = "src.main:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-qt>=4.4",
+    "ruff>=0.4",
+]
+
+[tool.maturin]
+manifest-path = "rust/Cargo.toml"
+module-name = "vigilia_core._vigilia_core"
+python-source = "src"
+features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
