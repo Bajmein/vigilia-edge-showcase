@@ -57,6 +57,43 @@ biblioteca de extensión nativa (`.so`/`.pyd`), pero no tiene GIL que lo frene.
 
 ---
 
+## La capa de Cognición — más allá del scheduling
+
+El núcleo Rust de Vigilia Edge no es simplemente un scheduler de procesos. Implementa la
+capa cognitiva completa del sistema: el pipeline de análisis que transforma bounding boxes
+crudas en eventos de seguridad accionables.
+
+### Multi-tracker con selección de algoritmo
+
+El núcleo expone tres algoritmos de tracking seleccionables desde `config.yaml`:
+**BoT-SORT**, **ByteTrack** y **Hybrid-SORT**. La selección no requiere recompilación —
+el algoritmo activo se carga al inicio del proceso. Esto permite ajustar el balance entre
+precisión de re-identificación (BoT-SORT) y velocidad en escenas densas (ByteTrack) sin
+tocar código.
+
+### Filtro de Kalman para predicción de movimiento
+
+La predicción de la posición de objetos entre frames se implementa con un filtro de Kalman
+lineal usando la crate `nalgebra`. Esto permite mantener tracks de objetos durante oclusiones
+breves y reduce los false-positive de intrusión cuando un objeto pasa brevemente fuera de
+frame.
+
+### Geometría computacional y validación de zonas
+
+La validación de zonas de intrusión y cruce de líneas usa cálculos IoU vectorizados en Rust,
+sin lock de intérprete Python en el hot path. Cada frame desencadena validación geométrica de
+todos los tracks activos contra todas las zonas configuradas — a 25fps, esto es 25 evaluaciones
+por segundo por zona, sin que Python intervenga en el ciclo interno.
+
+### SAHI para objetos pequeños
+
+Cuando el modo SAHI (Slicing Aided Hyper Inference) está activo, la capa de Cognición
+coordina el slicing del frame en ventanas superpuestas y la fusión de las detecciones
+parciales. Esto permite detectar objetos pequeños que el modelo no detectaría sobre el
+frame completo, a costa de latencia adicional controlada por configuración.
+
+---
+
 ## Flujo completo
 
 ```
@@ -90,3 +127,35 @@ viajan por Iceoryx con latencia sub-milisegundo.
 
 Esto hace posible un sistema de vigilancia que responde en tiempo real desde hardware
 de escritorio sin depender de infraestructura cloud.
+
+---
+
+## La capa de Infraestructura — el backbone invisible
+
+Las cuatro capas de la solución (Multiprocessing, Shared Memory, Iceoryx, Rust Core) descansan
+sobre una capa transversal de infraestructura que hace el sistema resiliente y observable en
+producción.
+
+### Ring Buffers como IPC complementario
+
+Iceoryx es óptimo para metadatos de alta frecuencia y tamaño fijo (bounding boxes, timestamps).
+Para eventos menos frecuentes con tamaño variable — logs de auditoría, cambios de estado del
+motor de reglas, señales de respuesta hacia audio y notificaciones — el sistema usa Ring Buffers
+como canal IPC complementario. Cada mecanismo opera en el dominio donde tiene ventaja: Iceoryx
+para el hot path, Ring Buffers para el plano de control.
+
+### Prometheus para observabilidad en producción
+
+El pipeline expone métricas vía Prometheus: fps efectivos por proceso, latencia de inferencia
+por frame, tasa de detecciones por zona, uso de memoria compartida. En entornos de producción,
+estas métricas permiten detectar degradación de rendimiento (un proceso de inferencia que cae
+por debajo del fps objetivo) antes de que impacte la experiencia del operador.
+
+### Defensive programming y ciclo de vida de recursos
+
+Los procesos de larga duración en un pipeline de video enfrentan escenarios de fallo que no
+ocurren en un script de uso único: cámaras que se desconectan, GPU que se quedan sin memoria,
+procesos hijo que terminan inesperadamente. La capa de infraestructura aplica patrones de
+defensive programming — reintentos con backoff, liberación determinista de recursos al estilo
+RAII — para que el pipeline se recupere automáticamente de fallos transitorios sin intervención
+del operador.
