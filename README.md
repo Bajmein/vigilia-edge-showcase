@@ -105,7 +105,6 @@ El sistema es funcional y se utiliza para pruebas en entornos controlados. Es un
 
 ## Soporte y Contacto
 
-- Alertas del sistema: alertas@vigilia-security.tech
 - Contacto técnico: [kenno@vigilia-security.tech](mailto:kenno@vigilia-security.tech)
 
 ## Licencia
