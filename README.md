@@ -1,4 +1,4 @@
-# Vigilia Edge — Desktop v1.0
+# Vigilia Edge — Desktop v1.1.0
 
 ![Banner](assets/brand_banner_website_wide.png)
 
@@ -97,7 +97,7 @@ Este proyecto combina Python y Rust para aprovechar la flexibilidad de Python en
 
 ## Estado
 
-> v1.0 — operativo
+> v1.1.0 — operativo
 
 El sistema es funcional y se utiliza para pruebas en entornos controlados. Es una base de trabajo para experimentar con variantes embebidas más eficientes.
 
