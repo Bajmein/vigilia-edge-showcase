@@ -1,5 +1,11 @@
 # Vigilia Edge — Desktop v1.0
 
+![Banner](assets/brand_banner_website_wide.png)
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python)
+![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=flat-square&logo=opencv)
+![YOLO](https://img.shields.io/badge/YOLO-00FFFF?style=flat-square&logo=yolo)
+
 > **Architecture showcase** · Source code is private · Pipeline docs and hybrid Python/Rust build template
 
 > [!IMPORTANT]
@@ -9,10 +15,17 @@
 
 ---
 
+## Acerca del Proyecto
+
+Vigilia Edge es un proyecto experimental enfocado en crear sistemas de monitoreo de video de alta eficiencia que operan totalmente en local. La idea es procesar flujos de video con mínima latencia, permitiendo detección de objetos en tiempo real sin depender de servicios en la nube.
+
+Este repositorio documenta la arquitectura técnica y el diseño del sistema, mostrando cómo se integra el pipeline de visión artificial con una interfaz de escritorio fluida.
+
+---
+
 ## Arquitectura de Escritorio
 
-Vigilia Edge corre completamente en local — sin nube, sin latencia de red. El pipeline de video
-va de cámara a UI en menos de 2 frames a 25 fps mediante una arquitectura zero-copy:
+El sistema captura video y procesa los frames localmente, logrando una respuesta muy rápida mediante un pipeline optimizado:
 
 ```mermaid
 flowchart TB
@@ -76,27 +89,9 @@ flowchart TB
 
 ---
 
-## Por qué Rust — Arquitectura Híbrida Python/Rust
+## Tecnologías Utilizadas
 
-El núcleo de Vigilia Edge (`vigilia-core`) es una extensión nativa Rust compilada vía PyO3.
-Python orquesta y configura; Rust procesa frames donde la latencia y la seguridad de memoria importan.
-
-| Motivación | Detalle |
-|------------|---------|
-| **Zero-copy operations** | Los buffers de ~6 MB/frame se asignan en Shared Memory una sola vez. Rust pasa punteros — nunca copia datos entre el decoder, el scheduler y los workers de inferencia |
-| **Bypass del GIL** | El núcleo Rust corre en threads nativos de OS, sin el Global Interpreter Lock. Paralelismo real entre decodificación de frames y pipeline de inferencia GPU |
-| **Rendimiento determinista** | Sin GC pauses. La latencia de cámara a UI es ~80ms a 25fps de forma consistente bajo carga sostenida |
-| **Seguridad de memoria** | El compilador garantiza en tiempo de compilación: sin data races, sin dangling pointers en el pipeline de video — crítico en software de seguridad |
-| **Multi-tracker configurable** | El núcleo Rust expone tres algoritmos de tracking (BoT-SORT, ByteTrack, Hybrid-SORT) seleccionables desde configuración sin recompilar — abstracción de alto rendimiento sin overhead de despacho desde Python |
-| **Geometría computacional sin GIL** | Validaciones de zonas de intrusión y cruce de líneas con IoU vectorizado en Rust (nalgebra) — sin lock de intérprete Python en el hot path de análisis frame a frame |
-
----
-
-## Por qué Desktop-First
-
-- **Privacidad absoluta**: ningún frame sale del equipo; inferencia 100% local.
-- **Latencia determinista**: sin round-trip a cloud, pipeline de ~80ms de cámara a UI.
-- **Integración con hardware**: acceso directo a GPU local y buses de baja latencia del SO.
+Este proyecto combina Python y Rust para aprovechar la flexibilidad de Python en la configuración y la potencia de procesamiento de Rust en las tareas críticas de bajo nivel. El sistema busca alcanzar un balance entre facilidad de configuración y alto rendimiento.
 
 ---
 
@@ -104,8 +99,7 @@ Python orquesta y configura; Rust procesa frames donde la latencia y la segurida
 
 > v1.0 — operativo
 
-El sistema está en uso en producción en entornos controlados. Esta versión Desktop es la base
-sobre la que se construye la variante Edge embebida.
+El sistema es funcional y se utiliza para pruebas en entornos controlados. Es una base de trabajo para experimentar con variantes embebidas más eficientes.
 
 ---
 
